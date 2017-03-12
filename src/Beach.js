@@ -1,7 +1,7 @@
 import {RedBlackNode} from "./RedBlackTree";
 import {createCell} from "./Cell";
 import {attachCircle, detachCircle} from "./Circle";
-import {createEdge, setEdgeEnd} from "./Edge";
+import {createEdge, setEdgeEnd, createVertex} from "./Edge";
 import {beaches, epsilon} from "./Diagram";
 
 var beachPool = [];
@@ -30,10 +30,12 @@ export function removeBeach(beach) {
   var circle = beach.circle,
       x = circle.x,
       y = circle.cy,
-      vertex = [x, y],
+      // vertex = [x, y],
       previous = beach.P,
       next = beach.N,
       disappearing = [beach];
+
+  var vertex = createVertex(x, y);
 
   detachBeach(beach);
 
@@ -148,8 +150,9 @@ export function addBeach(site) {
       cy = rSite[1] - ay,
       d = 2 * (bx * cy - by * cx),
       hb = bx * bx + by * by,
-      hc = cx * cx + cy * cy,
-      vertex = [(cy * hb - by * hc) / d + ax, (bx * hc - cx * hb) / d + ay];
+      hc = cx * cx + cy * cy;
+      // vertex = [(cy * hb - by * hc) / d + ax, (bx * hc - cx * hb) / d + ay];
+  var vertex = createVertex((cy * hb - by * hc) / d + ax, (bx * hc - cx * hb) / d + ay);
 
   setEdgeEnd(rArc.edge, lSite, rSite, vertex);
   newArc.edge = createEdge(lSite, site, null, vertex);

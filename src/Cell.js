@@ -1,5 +1,5 @@
-import {createBorderEdge} from "./Edge";
-import {cells, edges, epsilon} from "./Diagram";
+import {createBorderEdge, createVertex} from "./Edge";
+import {cells, edges, vertices, epsilon} from "./Diagram";
 
 export function createCell(site) {
   return cells[site.index] = {
@@ -14,8 +14,8 @@ function cellHalfedgeAngle(cell, edge) {
       vb = edge.right;
   if (site === vb) vb = va, va = site;
   if (vb) return Math.atan2(vb[1] - va[1], vb[0] - va[0]);
-  if (site === va) va = edge[1], vb = edge[0];
-  else va = edge[0], vb = edge[1];
+  if (site === va) va = vertices[edge[1]], vb = vertices[edge[0]];
+  else va = vertices[edge[0]], vb = vertices[edge[1]];
   return Math.atan2(va[0] - vb[0], vb[1] - va[1]);
 }
 
@@ -72,17 +72,24 @@ export function clipCells(x0, y0, x1, y1) {
       // Insert any border edges as necessary.
       iHalfedge = 0, nHalfedges = halfedges.length;
       while (iHalfedge < nHalfedges) {
-        end = cellHalfedgeEnd(cell, edges[halfedges[iHalfedge]]), endX = end[0], endY = end[1];
-        start = cellHalfedgeStart(cell, edges[halfedges[++iHalfedge % nHalfedges]]), startX = start[0], startY = start[1];
+        end = cellHalfedgeEnd(cell, edges[halfedges[iHalfedge]]), endX = vertices[end][0], endY = vertices[end][1];
+        start = cellHalfedgeStart(cell, edges[halfedges[++iHalfedge % nHalfedges]]), startX = vertices[start][0], startY = vertices[start][1];
         if (Math.abs(endX - startX) > epsilon || Math.abs(endY - startY) > epsilon) {
-          halfedges.splice(iHalfedge, 0, edges.push(createBorderEdge(site, end,
-              Math.abs(endX - x0) < epsilon && y1 - endY > epsilon ? [x0, Math.abs(startX - x0) < epsilon ? startY : y1]
+          var tempStart = Math.abs(endX - x0) < epsilon && y1 - endY > epsilon ? [x0, Math.abs(startX - x0) < epsilon ? startY : y1]
               : Math.abs(endY - y1) < epsilon && x1 - endX > epsilon ? [Math.abs(startY - y1) < epsilon ? startX : x1, y1]
               : Math.abs(endX - x1) < epsilon && endY - y0 > epsilon ? [x1, Math.abs(startX - x1) < epsilon ? startY : y0]
               : Math.abs(endY - y0) < epsilon && endX - x0 > epsilon ? [Math.abs(startY - y0) < epsilon ? startX : x0, y0]
-              : null)) - 1);
+              : null;
+          if (tempStart && (Math.abs(tempStart[0] - startX) > epsilon || Math.abs(tempStart[1] - startY) > epsilon)) {
+            start = createVertex(tempStart[0], tempStart[1]);
+            //console.log("insert border edge: %f, %f", endX - startX, endY - startY);
+          }
+          //if (tempStart === null)
+            //console.log("null tempStart");
+          halfedges.splice(iHalfedge, 0, edges.push(createBorderEdge(site, end, start)) - 1);
           ++nHalfedges;
         }
+        //console.log("%d,%d:%d,%d", endX, endY, startX, startY);
       }
 
       if (nHalfedges) cover = false;
@@ -105,7 +112,10 @@ export function clipCells(x0, y0, x1, y1) {
     }
 
     if (cover) {
-      var v00 = [x0, y0], v01 = [x0, y1], v11 = [x1, y1], v10 = [x1, y0];
+      var v00 = createVertex(x0, y0), 
+          v01 = createVertex(x0, y1), 
+          v11 = createVertex(x1, y1), 
+          v10 = createVertex(x1, y0);
       cover.halfedges.push(
         edges.push(createBorderEdge(site = cover.site, v00, v01)) - 1,
         edges.push(createBorderEdge(site, v01, v11)) - 1,

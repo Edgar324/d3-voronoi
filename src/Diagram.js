@@ -10,6 +10,7 @@ export var beaches;
 export var cells;
 export var circles;
 export var edges;
+export var vertices;
 
 function triangleArea(a, b, c) {
   return (a[0] - c[0]) * (b[1] - a[1]) - (a[0] - b[0]) * (c[1] - a[1]);
@@ -27,6 +28,7 @@ export default function Diagram(sites, extent) {
       circle;
 
   edges = [];
+  vertices = [];
   cells = new Array(sites.length);
   beaches = new RedBlackTree;
   circles = new RedBlackTree;
@@ -53,16 +55,21 @@ export default function Diagram(sites, extent) {
         y0 = +extent[0][1],
         x1 = +extent[1][0],
         y1 = +extent[1][1];
+    //console.log("begin extent");
     clipEdges(x0, y0, x1, y1);
+    //console.log("clip edges finished");
     clipCells(x0, y0, x1, y1);
+    //console.log("clip cells finished");
   }
 
   this.edges = edges;
   this.cells = cells;
+  this.vertices = vertices;
 
   beaches =
   circles =
   edges =
+  vertices =
   cells = null;
 }
 
@@ -71,9 +78,10 @@ Diagram.prototype = {
 
   polygons: function() {
     var edges = this.edges;
+    var vertices = this.vertices;
 
     return this.cells.map(function(cell) {
-      var polygon = cell.halfedges.map(function(i) { return cellHalfedgeStart(cell, edges[i]); });
+      var polygon = cell.halfedges.map(function(i) { return vertices[cellHalfedgeStart(cell, edges[i])]; });
       polygon.data = cell.site.data;
       return polygon;
     });
@@ -115,6 +123,14 @@ Diagram.prototype = {
         target: edge.right.data
       };
     });
+  },
+
+  edges: function() {
+    return this.edges;
+  },
+
+  vertices: function() {
+    return this.vertices;
   },
 
   find: function(x, y, radius) {

@@ -28,6 +28,14 @@ export default function() {
     return voronoi(data).triangles();
   };
 
+  voronoi.edges = function(data) {
+    return voronoi(data).edges();
+  };
+
+  voronoi.vertices = function(data) {
+    return voronoi(data).vertices();
+  };
+
   voronoi.x = function(_) {
     return arguments.length ? (x = typeof _ === "function" ? _ : constant(+_), voronoi) : x;
   };
